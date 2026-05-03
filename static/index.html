@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vera — magicpin Merchant AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="toast-container"></div>
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="logo-text">
+                <h1>Vera <span>v2.0</span></h1>
+                <p>magicpin Merchant AI Assistant</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="status-badge" id="system-status">
+                <div class="status-dot"></div>
+                <span>Online</span>
+            </div>
+            <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <aside class="panel sidebar">
+            <div class="card">
+                <h3><span>Metadata</span><span class="badge" id="meta-badge">-</span></h3>
+                <div class="stat-group" id="metadata-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Team</span>
+                        <span class="stat-value" id="meta-team">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Model</span>
+                        <span class="stat-value" id="meta-model">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Version</span>
+                        <span class="stat-value" id="meta-version">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Submitted</span>
+                        <span class="stat-value" id="meta-submitted">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><span>System Health</span><span class="badge active" id="health-badge">Live</span></h3>
+                <div class="stat-group" id="health-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Uptime</span>
+                        <span class="stat-value" id="health-uptime">0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Contexts</span>
+                        <span class="stat-value" id="health-contexts">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Categories</span>
+                        <span class="stat-value" id="health-cats">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Merchants</span>
+                        <span class="stat-value" id="health-merchants">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Triggers</span>
+                        <span class="stat-value" id="health-triggers">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><span>Test Data</span><span class="badge">Mock</span></h3>
+                <div class="mock-controls">
+                    <p class="help-text">Load sample contexts to simulate real merchant data.</p>
+                    <button class="action-btn" id="load-mock-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Load Mock Data
+                    </button>
+                    <button class="action-btn secondary" id="clear-mock-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Clear All Data
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: auto;">
+                <h3>Controls</h3>
+                <button class="action-btn primary pulse" id="tick-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Run Tick (Trigger)
+                </button>
+                <button class="action-btn secondary" id="reset-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset System
+                </button>
+            </div>
+        </aside>
+
+        <main class="panel chat-main">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <div class="avatar vera-avatar">V</div>
+                    <div>
+                        <div class="chat-name">Vera</div>
+                        <div class="chat-status" id="chat-status">AI Assistant active</div>
+                    </div>
+                </div>
+                <button class="icon-btn" id="clear-chat-btn" title="Clear chat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+
+            <div id="chat-history">
+                <div class="message vera">
+                    <div class="msg-meta">Vera <span class="msg-time">Now</span></div>
+                    <div class="msg-body">Welcome! I'm Vera, your AI merchant assistant. Load test data from the sidebar, then run a tick to see me compose messages. You can also reply as a merchant to test the conversation flow.</div>
+                </div>
+            </div>
+
+            <div id="typing-indicator" class="typing-indicator hidden">
+                <div class="msg-meta">Vera is typing</div>
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+            </div>
+
+            <div class="chat-input-wrapper">
+                <div class="input-container">
+                    <input type="text" id="merchant-input" placeholder="Type a message as merchant..." autocomplete="off">
+                    <button class="btn-send" id="send-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="panel action-panel">
+            <div class="card">
+                <h3><span>Debug Contexts</span><button class="refresh-btn" id="refresh-debug" title="Refresh">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button></h3>
+                <div class="debug-section">
+                    <div class="debug-label">Categories <span class="debug-count" id="dbg-cat-count">0</span></div>
+                    <div class="debug-list" id="dbg-cats">-</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Merchants <span class="debug-count" id="dbg-mer-count">0</span></div>
+                    <div class="debug-list" id="dbg-merchants">-</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Customers <span class="debug-count" id="dbg-cust-count">0</span></div>
+                    <div class="debug-list" id="dbg-customers">-</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Triggers <span class="debug-count" id="dbg-trg-count">0</span></div>
+                    <div class="debug-list" id="dbg-triggers">-</div>
+                </div>
+                <div class="debug-section">
+                    <div class="debug-label">Fired Keys <span class="debug-count" id="dbg-key-count">0</span></div>
+                    <div class="debug-list" id="dbg-fired">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><span>Conversation Log</span><span class="badge" id="conv-badge">0</span></h3>
+                <div class="conversation-list" id="conversation-log">
+                    <div class="empty-state">No active conversations</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><span>Endpoint Log</span><span class="badge active" id="req-badge">Live</span></h3>
+                <div class="endpoint-log" id="endpoint-log">
+                    <div class="log-entry info"><span class="log-time">--:--</span> System ready</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const chatHistory = document.getElementById('chat-history');
+        const merchantInput = document.getElementById('merchant-input');
+        const sendBtn = document.getElementById('send-btn');
+        const tickBtn = document.getElementById('tick-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const clearChatBtn = document.getElementById('clear-chat-btn');
+        const loadMockBtn = document.getElementById('load-mock-btn');
+        const clearMockBtn = document.getElementById('clear-mock-btn');
+        const refreshDebugBtn = document.getElementById('refresh-debug');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const themeToggle = document.getElementById('theme-toggle');
+        const systemStatus = document.getElementById('system-status');
+
+        let currentConversationId = null;
+        let turnNumber = 2;
+        let isTyping = false;
+        let conversationMap = new Map();
+
+        // --- Theme ---
+        const savedTheme = localStorage.getItem('vera-theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        themeToggle.onclick = () => {
+            const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', next);
+            localStorage.setItem('vera-theme', next);
+            logEndpoint('Theme switched to ' + next);
+        };
+
+        // --- Toasts ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Endpoint Log ---
+        function logEndpoint(text, type = 'info') {
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="log-time">${time}</span> ${escapeHtml(text)}`;
+            const logEl = document.getElementById('endpoint-log');
+            logEl.prepend(entry);
+            if (logEl.children.length > 50) logEl.lastChild.remove();
+        }
+
+        // --- Metadata & Health ---
+        async function updateMetadata() {
+            try {
+                const res = await fetch('/v1/metadata');
+                const data = await res.json();
+                document.getElementById('meta-team').textContent = data.team_name || '-';
+                document.getElementById('meta-model').textContent = data.model || '-';
+                document.getElementById('meta-version').textContent = data.version || '-';
+                document.getElementById('meta-submitted').textContent = data.submitted_at ? data.submitted_at.split('T')[0] : '-';
+                document.getElementById('meta-badge').textContent = data.version || '-';
+                logEndpoint('Metadata loaded');
+            } catch (e) {
+                logEndpoint('Metadata failed: ' + e.message, 'error');
+                systemStatus.innerHTML = '<div class="status-dot offline"></div><span>Offline</span>';
+            }
+        }
+
+        async function updateHealth() {
+            try {
+                const res = await fetch('/v1/healthz');
+                const data = await res.json();
+                document.getElementById('health-uptime').textContent = formatDuration(data.uptime_seconds);
+                const c = data.contexts_loaded || {};
+                const total = Object.values(c).reduce((a, b) => a + b, 0);
+                document.getElementById('health-contexts').textContent = total;
+                document.getElementById('health-cats').textContent = c.category || 0;
+                document.getElementById('health-merchants').textContent = c.merchant || 0;
+                document.getElementById('health-triggers').textContent = c.trigger || 0;
+                systemStatus.innerHTML = '<div class="status-dot"></div><span>Online</span>';
+            } catch (e) {
+                systemStatus.innerHTML = '<div class="status-dot offline"></div><span>Offline</span>';
+            }
+        }
+
+        function formatDuration(sec) {
+            if (sec < 60) return sec + 's';
+            if (sec < 3600) return Math.floor(sec/60) + 'm ' + (sec%60) + 's';
+            return Math.floor(sec/3600) + 'h ' + Math.floor((sec%3600)/60) + 'm';
+        }
+
+        // --- Chat ---
+        function addMessage(role, body, meta = '') {
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour:'2-digit', minute:'2-digit'});
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            const name = role === 'vera' ? 'Vera' : 'Merchant';
+            div.innerHTML = `
+                <div class="msg-meta">${name} <span class="msg-time">${time}</span></div>
+                <div class="msg-body">${escapeHtml(body)}</div>
+            `;
+            chatHistory.appendChild(div);
+            requestAnimationFrame(() => {
+                div.style.animation = 'messageIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+            });
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function setTyping(show) {
+            isTyping = show;
+            typingIndicator.classList.toggle('hidden', !show);
+            if (show) chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function clearChat() {
+            chatHistory.innerHTML = `
+                <div class="message vera">
+                    <div class="msg-meta">Vera <span class="msg-time">Now</span></div>
+                    <div class="msg-body">Chat cleared. Ready for new conversations.</div>
+                </div>`;
+            currentConversationId = null;
+            turnNumber = 2;
+            conversationMap.clear();
+            updateConversationLog();
+            logEndpoint('Chat cleared');
+            showToast('Chat history cleared');
+        }
+
+        // --- Tick ---
+        async function runTick() {
+            tickBtn.disabled = true;
+            logEndpoint('POST /v1/tick');
+            try {
+                const res = await fetch('/v1/tick', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ now: new Date().toISOString(), available_triggers: [] })
+                });
+                const data = await res.json();
+                logEndpoint(`Tick returned ${data.actions?.length || 0} actions`, data.actions?.length ? 'success' : 'info');
+                if (data.actions && data.actions.length > 0) {
+                    data.actions.forEach((action, i) => {
+                        setTimeout(() => {
+                            currentConversationId = action.conversation_id;
+                            conversationMap.set(action.conversation_id, {
+                                id: action.conversation_id,
+                                merchant: action.merchant_id,
+                                trigger: action.trigger_id,
+                                body: action.body,
+                                time: new Date().toLocaleTimeString('en-US', {hour12: false, hour:'2-digit', minute:'2-digit'}),
+                                cta: action.cta
+                            });
+                            updateConversationLog();
+                            addMessage('vera', action.body, action.trigger_id);
+                            showToast(`Trigger fired: ${action.trigger_id}`, 'success');
+                        }, i * 300);
+                    });
+                } else {
+                    addMessage('vera', 'No pending triggers to fire. Try loading mock data first.', 'System');
+                    showToast('No triggers available', 'warning');
+                }
+            } catch (e) {
+                logEndpoint('Tick error: ' + e.message, 'error');
+                addMessage('vera', 'Error running tick: ' + e.message, 'Error');
+                showToast('Tick failed: ' + e.message, 'error');
+            } finally {
+                tickBtn.disabled = false;
+            }
+        }
+
+        // --- Reply ---
+        async function sendMessage() {
+            const msg = merchantInput.value.trim();
+            if (!msg) return;
+            merchantInput.value = '';
+            addMessage('merchant', msg);
+            setTyping(true);
+            logEndpoint('POST /v1/reply');
+
+            try {
+                const res = await fetch('/v1/reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        conversation_id: currentConversationId || 'demo_conv_' + Math.random().toString(36).substr(2, 9),
+                        merchant_id: conversationMap.get(currentConversationId)?.merchant || null,
+                        customer_id: null,
+                        from_role: 'merchant',
+                        message: msg,
+                        received_at: new Date().toISOString(),
+                        turn_number: turnNumber++
+                    })
+                });
+                const data = await res.json();
+                logEndpoint(`Reply action=${data.action}`, data.action === 'send' ? 'success' : 'warning');
+                setTyping(false);
+                setTimeout(() => {
+                    if (data.action === 'send') {
+                        addMessage('vera', data.body, data.rationale);
+                    } else {
+                        addMessage('vera', `Conversation ${data.action}: ${data.rationale}`, 'System');
+                    }
+                }, 400);
+            } catch (e) {
+                setTyping(false);
+                logEndpoint('Reply error: ' + e.message, 'error');
+                addMessage('vera', 'Error: ' + e.message, 'Error');
+                showToast('Reply failed', 'error');
+            }
+        }
+
+        // --- Debug Panel ---
+        async function refreshDebug() {
+            logEndpoint('GET /v1/debug/contexts');
+            try {
+                const res = await fetch('/v1/debug/contexts');
+                const data = await res.json();
+                const renderList = (arr, id) => {
+                    const el = document.getElementById(id);
+                    if (!arr || arr.length === 0) { el.textContent = '-'; return; }
+                    el.innerHTML = arr.map(x => `<span class="chip">${escapeHtml(x)}</span>`).join('');
+                };
+                renderList(data.categories, 'dbg-cats');
+                renderList(data.merchants, 'dbg-merchants');
+                renderList(data.customers, 'dbg-customers');
+                renderList(data.triggers, 'dbg-triggers');
+                renderList(data.fired_keys, 'dbg-fired');
+                document.getElementById('dbg-cat-count').textContent = (data.categories || []).length;
+                document.getElementById('dbg-mer-count').textContent = (data.merchants || []).length;
+                document.getElementById('dbg-cust-count').textContent = (data.customers || []).length;
+                document.getElementById('dbg-trg-count').textContent = (data.triggers || []).length;
+                document.getElementById('dbg-key-count').textContent = (data.fired_keys || []).length;
+                logEndpoint('Debug contexts refreshed');
+            } catch (e) {
+                logEndpoint('Debug error: ' + e.message, 'error');
+            }
+        }
+
+        function updateConversationLog() {
+            const badge = document.getElementById('conv-badge');
+            badge.textContent = conversationMap.size;
+            if (conversationMap.size === 0) {
+                document.getElementById('conversation-log').innerHTML = '<div class="empty-state">No active conversations</div>';
+                return;
+            }
+            document.getElementById('conversation-log').innerHTML = Array.from(conversationMap.values()).reverse().map(c => `
+                <div class="conv-item ${currentConversationId === c.id ? 'active' : ''}">
+                    <div class="conv-title">${escapeHtml(c.trigger || 'Unknown')}</div>
+                    <div class="conv-preview">${escapeHtml(c.body.slice(0, 40))}${c.body.length > 40 ? '...' : ''}</div>
+                    <div class="conv-meta">${c.time} &middot; ${escapeHtml(c.cta || 'none')}</div>
+                </div>
+            `).join('');
+        }
+
+        // --- Mock Data ---
+        const MOCK_CATEGORY = {
+            scope: 'category', context_id: 'cat_dentist_001', version: 1,
+            payload: {
+                slug: 'dentists', voice: { tone: 'peer/clinical', code_mix: true, vocab_allowed: ['Dr.', 'patient', 'cleaning', 'checkup'], vocab_taboo: ['cheap', 'discount'], salutation_examples: ['Namaste Dr.', 'Hello Dr.'] },
+                peer_stats: { scope: 'all_dentists', avg_ctr: 0.035, avg_rating: 4.2, avg_review_count: 45, avg_views_30d: 1200, avg_calls_30d: 80 },
+                seasonal_beats: [{ month_range: 'Oct-Dec', note: 'Post-festival dental cleanings spike' }],
+                trend_signals: [{ query: 'teeth whitening', delta_yoy: 0.18 }],
+                offer_catalog: [{ title: 'Dental Cleaning @ ₹299' }, { title: 'Free Consultation' }],
+                digest: [{ id: 'd1', title: 'Fluoride awareness campaign', source: 'JIDA', trial_n: 120, patient_segment: 'children', summary: 'School-based fluoride programs show 40% cavity reduction', actionable: 'Offer kids checkup packages', date: '2026-04-15', kind: 'clinical_study' }]
+            },
+            delivered_at: new Date().toISOString()
+        };
+
+        const MOCK_MERCHANT = {
+            scope: 'merchant', context_id: 'mer_dental_smile_001', version: 1,
+            payload: {
+                identity: { name: 'Smile Dental Care', owner_first_name: 'Dr. Priya', locality: 'Koramangala', city: 'Bangalore', verified: true, languages: ['en', 'hi'] },
+                performance: { views: 3400, calls: 145, directions: 89, ctr: 0.042, leads: 32, delta_7d: { views_pct: 0.12, calls_pct: -0.03 } },
+                subscription: { status: 'active', plan: 'Growth', days_remaining: 45 },
+                customer_aggregate: { total_unique_ytd: 890, lapsed_180d_plus: 120, retention_6mo_pct: 0.68, high_risk_adult_count: 45 },
+                offers: [{ title: 'Dental Cleaning @ ₹299', status: 'active' }, { title: 'Whitening 20% Off', status: 'expired' }],
+                signals: ['high_call_abandon_rate', 'weekend_underbooked'],
+                review_themes: [{ theme: 'gentle', sentiment: 'positive', occurrences_30d: 8 }, { theme: 'wait_time', sentiment: 'negative', occurrences_30d: 4 }],
+                conversation_history: [{ from: 'vera', body: 'Hi Dr. Priya, views up 12% this week!' }],
+                category_slug: 'cat_dentist_001'
+            },
+            delivered_at: new Date().toISOString()
+        };
+
+        const MOCK_TRIGGER = {
+            scope: 'trigger', context_id: 'trg_digest_001', version: 1,
+            payload: {
+                kind: 'digest_share', scope: 'merchant', source: 'daily_digest',
+                urgency: 3, suppression_key: 'sup_digest_001',
+                expires_at: '2026-12-31T23:59:59Z',
+                merchant_id: 'mer_dental_smile_001',
+                payload: { top_item_id: 'd1', headline: 'Fluoride programs cut cavities 40%' }
+            },
+            delivered_at: new Date().toISOString()
+        };
+
+        const MOCK_CUSTOMER = {
+            scope: 'customer', context_id: 'cust_raj_001', version: 1,
+            payload: {
+                identity: { name: 'Rajesh', language_pref: 'hi' },
+                state: 'lapsed',
+                relationship: { visits_total: 3, last_visit: '2025-10-15', services_received: ['cleaning', 'filling'], avg_spend_per_visit: 450 },
+                preferences: { preferred_slots: 'evening' },
+                consent: { scope: ['whatsapp_marketing'] }
+            },
+            delivered_at: new Date().toISOString()
+        };
+
+        async function loadMockData() {
+            logEndpoint('Loading mock contexts...');
+            const payloads = [MOCK_CATEGORY, MOCK_MERCHANT, MOCK_TRIGGER, MOCK_CUSTOMER];
+            let ok = 0;
+            for (const p of payloads) {
+                try {
+                    const res = await fetch('/v1/context', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(p)
+                    });
+                    if (res.ok) ok++;
+                } catch (e) { logEndpoint(`Mock ${p.scope} failed: ${e.message}`, 'error'); }
+            }
+            logEndpoint(`Loaded ${ok}/${payloads.length} mock contexts`, ok === payloads.length ? 'success' : 'warning');
+            showToast(`${ok} mock contexts loaded`, ok === payloads.length ? 'success' : 'warning');
+            updateHealth();
+            refreshDebug();
+        }
+
+        async function clearMockData() {
+            logEndpoint('POST /v1/teardown');
+            try {
+                await fetch('/v1/teardown', { method: 'POST' });
+                showToast('All data cleared', 'success');
+                updateHealth();
+                refreshDebug();
+            } catch (e) {
+                showToast('Clear failed', 'error');
+            }
+        }
+
+        // --- Event Listeners ---
+        tickBtn.onclick = runTick;
+        sendBtn.onclick = sendMessage;
+        merchantInput.onkeydown = (e) => { if (e.key === 'Enter') sendMessage(); };
+        resetBtn.onclick = async () => {
+            if (confirm('Wipe all contexts and conversations?')) {
+                await fetch('/v1/teardown', { method: 'POST' });
+                location.reload();
+            }
+        };
+        clearChatBtn.onclick = clearChat;
+        loadMockBtn.onclick = loadMockData;
+        clearMockBtn.onclick = clearMockData;
+        refreshDebugBtn.onclick = refreshDebug;
+
+        setInterval(updateHealth, 3000);
+        updateMetadata();
+        updateHealth();
+        refreshDebug();
+    </script>
+</body>
+</html>
