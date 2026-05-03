@@ -125,20 +125,55 @@ def _mock_compose(category, merchant, trigger, customer=None):
             "cta": "binary_yes_stop", "send_as": "merchant_on_behalf", "suppression_key": trigger.get("suppression_key", "mock"),
             "rationale": "Mock: Lapsed customer engagement lever."
         }
+    responses = [
+        f"Hi Dr. Priya, your views are up 12%! {kind.replace('_', ' ')} ready for review. Should we push this to your profile? Reply YES/STOP",
+        f"Namaste Dr. Priya! I've spotted a trend for 'teeth whitening' in Koramangala. Want to launch a special offer? Reply YES/STOP",
+        f"Hello! Your weekend bookings look a bit low. I've prepared a 'Dental Cleaning @ ₹299' trigger. Shall we blast it? Reply YES/STOP"
+    ]
+    import random
     return {
-        "body": f"Hi Dr. Priya, your views are up 12%! {kind.replace('_', ' ')} ready for review. Should we push this to your profile? Reply YES/STOP",
+        "body": random.choice(responses),
         "cta": "binary_yes_stop", "send_as": "vera", "suppression_key": trigger.get("suppression_key", "mock"),
         "rationale": "Mock: Performance growth trigger."
     }
 
 def _mock_reply(msg, intent, owner):
+    import random
     if intent == "greet":
-        return {"action": "send", "body": f"Hello {owner}! How can I help you grow your business today?", "cta": "open_ended", "rationale": "Mock: Friendly greeting response."}
+        greets = [
+            f"Hello {owner}! How can I help you grow your business today?",
+            f"Namaste {owner}! Vera here. Ready to boost your magicpin visibility?",
+            f"Hi {owner}! I was just analyzing your latest performance stats. What's on your mind?",
+            f"Hello there! Hope you're having a busy day at the clinic. How can I assist?"
+        ]
+        return {"action": "send", "body": random.choice(greets), "cta": "open_ended", "rationale": "Mock: Varied greeting."}
+    
     if intent == "accept":
-        return {"action": "send", "body": "Great! I'm on it. I'll update your profile and send you a confirmation once it's live.", "cta": "none", "rationale": "Mock: Immediate action on acceptance."}
+        accepts = [
+            "Great choice! I'm on it. I'll update your profile and send you a confirmation once it's live.",
+            "Perfect. I'll get that started immediately. You should see the changes on magicpin shortly.",
+            "Awesome! Processing your request now. Is there anything else you'd like to optimize?",
+            "Done! I've scheduled that for you. Your customers will see the new update soon."
+        ]
+        return {"action": "send", "body": random.choice(accepts), "cta": "none", "rationale": "Mock: Action confirmation."}
+    
     if intent == "stop":
         return {"action": "end", "rationale": "Merchant requested to stop."}
-    return {"action": "send", "body": f"I understand you said '{msg}'. I'm analyzing how that impacts your magicpin visibility. Want me to generate a new offer instead? Reply YES/STOP", "cta": "binary_yes_stop", "rationale": "Mock: Adaptive follow-up."}
+
+    if intent == "join":
+        return {"action": "send", "body": f"Excellent! To get started with the {owner} premium plan, I just need to verify your GST details. Should I pull them from your last invoice? Reply YES/STOP", "cta": "binary_yes_stop", "rationale": "Mock: Onboarding flow."}
+
+    # Neutral/Adaptive
+    m = msg.lower()
+    if "how" in m or "kaise" in m:
+        return {"action": "send", "body": "I use advanced AI to analyze your competition and customer patterns. For example, I noticed peers have 20% more calls by using 'verified' badges. Want one? Reply YES/STOP", "cta": "binary_yes_stop", "rationale": "Mock: Explanatory."}
+    
+    adaptives = [
+        f"I hear you! Regarding '{msg}', I'm seeing a similar pattern in your category. Should we adjust your active offers? Reply YES/STOP",
+        f"Interesting point. I've noted your feedback about '{msg}'. Would you like me to generate a performance report based on this? Reply YES/STOP",
+        f"Got it. I'm looking into '{msg}' right now. In the meantime, I have a new 'social proof' message ready for your customers. Send it? Reply YES/STOP"
+    ]
+    return {"action": "send", "body": random.choice(adaptives), "cta": "binary_yes_stop", "rationale": "Mock: Adaptive follow-up."}
 
 def _build_prompt(category, merchant, trigger, customer=None, conv_turns=None):
     idn   = merchant.get("identity",{})
