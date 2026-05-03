@@ -19,8 +19,8 @@ TEAM_NAME    = "Vera Challenger"
 TEAM_MEMBERS = ["Uday"]
 MODEL        = "claude-sonnet-4-5"
 EMAIL        = "uday@example.com"
-VERSION      = "2.0.0"
-SUBMITTED_AT = "2026-05-03T00:00:00Z"
+VERSION      = "3.0.0"
+SUBMITTED_AT = "2026-05-03T23:45:00Z"
 
 START_TIME       = time.time()
 contexts: dict   = {}   # (scope, ctx_id) -> {version, payload}
