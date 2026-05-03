@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pydantic
+anthropic
+google-generativeai
+python-multipart
