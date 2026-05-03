@@ -1,6 +1,6 @@
 """
-Vera — magicpin Merchant AI Assistant  (v3.1)
-All 5 endpoints + Claude-powered context-grounded composition + Smart Mock Mode.
+Vera — magicpin Merchant AI Assistant  (v3.2)
+All 5 endpoints + Multi-LLM Support (Claude/Gemini) + Smart Mock Mode.
 """
 
 import os, time, uuid, json, re, logging
@@ -11,16 +11,21 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import anthropic
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("vera")
 
 TEAM_NAME    = "Vera Challenger"
 TEAM_MEMBERS = ["Uday"]
-MODEL        = "claude-3-5-sonnet-20241022"
+ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
+GEMINI_MODEL    = "gemini-1.5-flash"
 EMAIL        = "uday@example.com"
-VERSION      = "3.1.0"
-SUBMITTED_AT = "2026-05-03T23:50:00Z"
+VERSION      = "3.2.0"
+SUBMITTED_AT = "2026-05-03T23:55:00Z"
 
 START_TIME       = time.time()
 contexts: dict   = {}   # (scope, ctx_id) -> {version, payload}
@@ -34,8 +39,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def root():
     return FileResponse("static/index.html")
 
-API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-_claude = anthropic.Anthropic(api_key=API_KEY) if API_KEY else None
+API_KEY = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+_claude = None
+_gemini = None
+
+if API_KEY.startswith("sk-ant-"):
+    _claude = anthropic.Anthropic(api_key=API_KEY)
+    log.info("Initialized Anthropic client.")
+elif (API_KEY.startswith("AIza") or len(API_KEY) > 30) and genai:
+    genai.configure(api_key=API_KEY)
+    _gemini = genai.GenerativeModel(GEMINI_MODEL)
+    log.info("Initialized Gemini client.")
+else:
+    log.warning("No valid API key found. Running in Smart Mock Mode.")
 
 def _now(): return datetime.now(timezone.utc).isoformat().replace("+00:00","Z")
 
@@ -178,21 +194,9 @@ def _mock_reply(msg, intent, owner):
 def _build_prompt(category, merchant, trigger, customer=None, conv_turns=None):
     idn   = merchant.get("identity",{})
     perf  = merchant.get("performance",{})
-    d7    = perf.get("delta_7d",{})
-    sub   = merchant.get("subscription",{})
-    ca    = merchant.get("customer_aggregate",{})
-    sigs  = merchant.get("signals",[])
-    offers= merchant.get("offers",[])
-    revs  = merchant.get("review_themes",[])
-    hist  = merchant.get("conversation_history",[])
     v     = category.get("voice",{})
     ps    = category.get("peer_stats",{})
     digest_ref = _resolve_digest(trigger, category)
-
-    a_off = [o["title"] for o in offers if o.get("status")=="active"]
-    e_off = [o["title"] for o in offers if o.get("status")=="expired"]
-    peer_ctr = ps.get("avg_ctr",0); my_ctr = perf.get("ctr",0)
-    ctr_note = f"{'BELOW' if my_ctr<peer_ctr else 'ABOVE'} peer by {abs(my_ctr-peer_ctr)*100:.1f}pts"
 
     lines = ["=== CONTEXT (use only these facts) ==="]
     lines.append(f"CATEGORY: {category.get('slug','')}\nVoice: {v.get('tone','')} | Code-mix: {v.get('code_mix','')}\nPeer stats: avg_ctr={ps.get('avg_ctr',0):.3f}")
@@ -204,12 +208,17 @@ def _build_prompt(category, merchant, trigger, customer=None, conv_turns=None):
     return "\n".join(lines)
 
 def _compose(category, merchant, trigger, customer=None, conv_turns=None):
-    if not _claude: return _mock_compose(category, merchant, trigger, customer)
+    if not _claude and not _gemini: return _mock_compose(category, merchant, trigger, customer)
     prompt = _build_prompt(category, merchant, trigger, customer, conv_turns)
     try:
-        resp = _claude.messages.create(model=MODEL, max_tokens=512, temperature=0,
-            system=COMPOSE_SYSTEM, messages=[{"role":"user","content":prompt}])
-        raw = resp.content[0].text.strip()
+        if _claude:
+            resp = _claude.messages.create(model=ANTHROPIC_MODEL, max_tokens=512, temperature=0,
+                system=COMPOSE_SYSTEM, messages=[{"role":"user","content":prompt}])
+            raw = resp.content[0].text.strip()
+        else:
+            resp = _gemini.generate_content(f"{COMPOSE_SYSTEM}\n\n{prompt}")
+            raw = resp.text.strip()
+        
         raw = re.sub(r"^```json\s*","",raw); raw = re.sub(r"\s*```$","",raw)
         r = json.loads(raw); r["body"] = _clean(r.get("body",""))
         return r
@@ -223,17 +232,23 @@ def _compose_reply(conv, msg, merchant, category, trigger, customer):
     auto_cnt = conv.get("auto_reply_count",0)
     idn=merchant.get("identity",{}); owner=idn.get("owner_first_name",idn.get("name","Merchant"))
     
-    if not _claude: return _mock_reply(msg, intent, owner)
+    if not _claude and not _gemini: return _mock_reply(msg, intent, owner)
 
     if is_auto: conv["auto_reply_count"] = auto_cnt+1
     if is_auto and auto_cnt>=1: return {"action":"end","rationale":"Two auto-replies; graceful exit"}
     if intent=="stop": return {"action":"end","rationale":"Merchant signalled stop"}
 
     parts=[f'MERCHANT SAID: "{msg}"',f"INTENT: {intent}",f"OWNER: {owner}", f"CATEGORY: {category.get('slug','')}"]
+    prompt = "\n".join(parts)
     try:
-        resp = _claude.messages.create(model=MODEL, max_tokens=300, temperature=0,
-            system=REPLY_SYSTEM, messages=[{"role":"user","content":"\n".join(parts)}])
-        raw = resp.content[0].text.strip()
+        if _claude:
+            resp = _claude.messages.create(model=ANTHROPIC_MODEL, max_tokens=300, temperature=0,
+                system=REPLY_SYSTEM, messages=[{"role":"user","content":prompt}])
+            raw = resp.content[0].text.strip()
+        else:
+            resp = _gemini.generate_content(f"{REPLY_SYSTEM}\n\n{prompt}")
+            raw = resp.text.strip()
+            
         raw = re.sub(r"^```json\s*","",raw); raw = re.sub(r"\s*```$","",raw)
         r = json.loads(raw)
         if r.get("action")=="send": r["body"]=_clean(r.get("body",""))
@@ -249,12 +264,13 @@ async def healthz():
     counts={"category":0,"merchant":0,"customer":0,"trigger":0}
     for (s,_) in contexts.keys():
         if s in counts: counts[s]+=1
-    return {"status":"ok","uptime_seconds":int(time.time()-START_TIME),"contexts_loaded":counts}
+    return {"status":"ok","uptime_seconds":int(time.time()-START_TIME),"contexts_loaded":counts, "llm": "claude" if _claude else "gemini" if _gemini else "mock"}
 
 @app.get("/v1/metadata")
 async def metadata():
-    return {"team_name":TEAM_NAME,"team_members":TEAM_MEMBERS,"model":MODEL,
-            "approach":"Context-grounded Claude composer with Smart Mock Mode fallback.",
+    return {"team_name":TEAM_NAME,"team_members":TEAM_MEMBERS,
+            "llm": "Anthropic Claude" if _claude else "Google Gemini" if _gemini else "Mock",
+            "approach":"Context-grounded Multi-LLM composer with Smart Mock Mode fallback.",
             "contact_email":EMAIL,"version":VERSION,"submitted_at":SUBMITTED_AT}
 
 class CtxBody(BaseModel):
